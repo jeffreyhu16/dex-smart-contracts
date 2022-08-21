@@ -8,6 +8,11 @@ const config: HardhatUserConfig = {
   networks: {
     localhost: {}
   },
+  namedAccounts: {
+    deployer: {
+      default: 0,
+    },
+  },
 };
 
 export default config;
