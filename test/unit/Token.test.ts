@@ -29,6 +29,11 @@ if (developmentChains.includes(network.name)) {
         });
 
         describe('transfer', () => {
+            it('reverts if transferring to zero address', async () => {
+                const receiver = ethers.constants.AddressZero;
+                await expect(token.transfer(receiver, parseEther('1000')))
+                    .to.be.revertedWithCustomError(token, 'Token__TransferringZeroAddress');
+            });
             it('reverts if sender has insufficient funds', async () => {
                 const receiver = (await ethers.getSigners())[1];
                 await expect(token.transfer(receiver.address, parseEther('10000000'))) // 10 million
