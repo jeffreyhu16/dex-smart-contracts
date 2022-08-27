@@ -61,7 +61,38 @@ if (developmentChains.includes(network.name)) {
                 const receiver = (await ethers.getSigners())[1];
                 await expect(token.transfer(receiver.address, parseEther('1000')))
                     .to.emit(token, 'Transfer')
-                    .withArgs(deployer, receiver.address, parseEther('1000').toString());
+                    .withArgs(
+                        deployer,
+                        receiver.address,
+                        parseEther('1000')
+                    );
+            });
+        });
+
+        describe('approve', () => {
+            it('reverts if approving to zero address', async () => {
+                const spender = ethers.constants.AddressZero;
+                await expect(token.approve(spender, parseEther('1000')))
+                    .to.be.revertedWithCustomError(token, 'Token__ApprovingZeroAddress');
+            });
+            it('updates spender allowance', async () => {
+                const spender = (await ethers.getSigners())[1];
+                await token.approve(spender.address, parseEther('1000'));
+                const allowance = await token.allowance(deployer, spender.address);
+                assert.equal(
+                    allowance.toString(),
+                    parseEther('1000').toString()
+                );
+            });
+            it('emits Approval event', async () => {
+                const spender = (await ethers.getSigners())[1];
+                await expect(token.approve(spender.address, parseEther('1000')))
+                    .to.emit(token, 'Approval')
+                    .withArgs(
+                        deployer,
+                        spender.address,
+                        parseEther('1000')
+                    );
             });
         });
     });
