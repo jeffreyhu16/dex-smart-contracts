@@ -1,3 +1,4 @@
+import { ethers } from "hardhat";
 import { DeployFunction } from "hardhat-deploy/dist/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
@@ -8,7 +9,11 @@ const deployToken: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     const token = await deploy('Token', {
         from: deployer,
         log: true,
-        args: []
+        args: [
+            'Nexus Plus', 
+            'NXP', 
+            ethers.utils.parseEther('1000000') // 1 million
+        ]
     });
 }
 

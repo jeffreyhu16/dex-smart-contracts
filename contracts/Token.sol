@@ -24,7 +24,7 @@ contract Token {
     ) {
         name = _name;
         symbol = _symbol;
-        totalSupply = _totalSupply * 1e18;
+        totalSupply = _totalSupply;
         tokenBalances[msg.sender] = totalSupply;
     }
 
@@ -34,7 +34,7 @@ contract Token {
         }
         tokenBalances[msg.sender] -= _value;
         tokenBalances[_to] += _value;
-        
+
         emit Transfer(msg.sender, _to, _value);
         return true;
     }
