@@ -4,6 +4,7 @@ pragma solidity ^0.8.9;
 import "hardhat/console.sol";
 
 error Token__InsufficientFunds();
+error Token__TransferringZeroAddress();
 error Token__ApprovingZeroAddress();
 
 contract Token {
@@ -39,6 +40,9 @@ contract Token {
     function transfer(address _to, uint256 _value) public returns (bool success) {
         if (tokenBalances[msg.sender] < _value) {
             revert Token__InsufficientFunds();
+        }
+        if (_to == address(0)) {
+            revert Token__TransferringZeroAddress();
         }
         tokenBalances[msg.sender] -= _value;
         tokenBalances[_to] += _value;
