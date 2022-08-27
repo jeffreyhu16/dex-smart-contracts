@@ -10,9 +10,9 @@ contract Token {
     mapping(address => uint256) public tokenBalances;
 
     event Transfer(
-        address indexed _from,
-        address indexed _to,
-        uint256 _value
+        address indexed from,
+        address indexed to,
+        uint256 value
     );
 
     constructor(
