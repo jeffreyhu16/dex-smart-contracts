@@ -34,8 +34,8 @@ contract Token {
         }
         tokenBalances[msg.sender] -= _value;
         tokenBalances[_to] += _value;
-        (bool success,) = _to.call{value: _value}("");
+        
         emit Transfer(msg.sender, _to, _value);
-        return success;
+        return true;
     }
 }
