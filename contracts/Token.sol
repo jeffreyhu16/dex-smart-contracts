@@ -9,6 +9,12 @@ contract Token {
     uint256 public totalSupply;
     mapping(address => uint256) public tokenBalances;
 
+    event Transfer(
+        address indexed _from,
+        address indexed _to,
+        uint256 _value
+    );
+
     constructor(
         string memory _name,
         string memory _symbol,
@@ -24,6 +30,7 @@ contract Token {
         tokenBalances[msg.sender] -= _value;
         tokenBalances[_to] += _value;
         (bool success,) = _to.call{value: _value}("");
+        emit Transfer(msg.sender, _to, _value);
         return success;
     }
 }
