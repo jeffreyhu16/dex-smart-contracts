@@ -6,6 +6,7 @@ import "hardhat/console.sol";
 error Token__InsufficientFunds();
 error Token__TransferringZeroAddress();
 error Token__ApprovingZeroAddress();
+error Token__InsufficientAllowance();
 
 contract Token {
     string public name;
@@ -57,6 +58,17 @@ contract Token {
         }
         allowance[msg.sender][_spender] = _value;
         emit Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        uint256 currentAllowance = allowance[_from][_to];
+        if (currentAllowance < _value) {
+            revert Token__InsufficientAllowance();
+        }
+        tokenBalances[_from] -= _value;
+        tokenBalances[_to] += _value;
+        emit Transfer(_from, _to, _value);
         return true;
     }
 }
