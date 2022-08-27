@@ -42,13 +42,7 @@ contract Token {
         if (tokenBalances[msg.sender] < _value) {
             revert Token__InsufficientFunds();
         }
-        if (_to == address(0)) {
-            revert Token__TransferringZeroAddress();
-        }
-        tokenBalances[msg.sender] -= _value;
-        tokenBalances[_to] += _value;
-
-        emit Transfer(msg.sender, _to, _value);
+        _transfer(msg.sender, _to, _value);
         return true;
     }
 
@@ -66,9 +60,16 @@ contract Token {
         if (currentAllowance < _value) {
             revert Token__InsufficientAllowance();
         }
+        _transfer(_from, _to, _value);
+        return true;
+    }
+
+    function _transfer(address _from, address _to, uint256 _value) internal {
+        if (_to == address(0)) {
+            revert Token__TransferringZeroAddress();
+        }
         tokenBalances[_from] -= _value;
         tokenBalances[_to] += _value;
-        emit Transfer(_from, _to, _value);
-        return true;
+        emit Transfer(msg.sender, _to, _value);
     }
 }
