@@ -42,13 +42,13 @@ if (developmentChains.includes(network.name)) {
             });
             it('transfers token balance correctly', async () => {
                 const receiver = (await ethers.getSigners())[1];
-                const receiverBefore = await token.tokenBalances(receiver.address);
-                const senderBefore = await token.tokenBalances(deployer);
+                const receiverBefore = await token.balance(receiver.address);
+                const senderBefore = await token.balance(deployer);
 
                 await token.transfer(receiver.address, parseEther('1000'));
 
-                const receiverAfter = await token.tokenBalances(receiver.address);
-                const senderAfter = await token.tokenBalances(deployer);
+                const receiverAfter = await token.balance(receiver.address);
+                const senderAfter = await token.balance(deployer);
                 assert.equal(
                     receiverAfter.sub(receiverBefore).toString(),
                     parseEther('1000').toString()
@@ -122,13 +122,13 @@ if (developmentChains.includes(network.name)) {
                 );
             });
             it('transfers tokens on behalf of approver', async () => {
-                const receiverBefore = await token.tokenBalances(receiver.address);
-                const approverBefore = await token.tokenBalances(deployer);
+                const receiverBefore = await token.balance(receiver.address);
+                const approverBefore = await token.balance(deployer);
 
                 await token.connect(spender).transferFrom(deployer, receiver.address, parseEther('1000'));
 
-                const receiverAfter = await token.tokenBalances(receiver.address);
-                const approverAfter = await token.tokenBalances(deployer);
+                const receiverAfter = await token.balance(receiver.address);
+                const approverAfter = await token.balance(deployer);
                 assert.equal(
                     receiverAfter.sub(receiverBefore).toString(),
                     parseEther('1000').toString()

@@ -12,12 +12,12 @@ contract Token {
     string public name;
     string public symbol;
     uint256 public totalSupply;
-    mapping(address => uint256) public tokenBalances;
+    mapping(address => uint256) public balance;
     mapping(address => mapping(address => uint256)) public allowance;
 
     event Transfer(
-        address indexed from,
-        address indexed to,
+        address indexed from, 
+        address indexed to, 
         uint256 value
     );
 
@@ -35,18 +35,24 @@ contract Token {
         name = _name;
         symbol = _symbol;
         totalSupply = _totalSupply;
-        tokenBalances[msg.sender] = totalSupply;
+        balance[msg.sender] = totalSupply;
     }
 
-    function transfer(address _to, uint256 _value) public returns (bool success) {
-        if (tokenBalances[msg.sender] < _value) {
+    function transfer(address _to, uint256 _value)
+        public
+        returns (bool success)
+    {
+        if (balance[msg.sender] < _value) {
             revert Token__InsufficientBalance();
         }
         _transfer(msg.sender, _to, _value);
         return true;
     }
 
-    function approve(address _spender, uint256 _value) public returns (bool success) {
+    function approve(address _spender, uint256 _value)
+        public
+        returns (bool success)
+    {
         if (_spender == address(0)) {
             revert Token__ApprovingZeroAddress();
         }
@@ -55,9 +61,13 @@ contract Token {
         return true;
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+    function transferFrom(
+        address _from,
+        address _to,
+        uint256 _value
+    ) public returns (bool success) {
         uint256 currentAllowance = allowance[_from][msg.sender];
-        if (tokenBalances[_from] < _value) {
+        if (balance[_from] < _value) {
             revert Token__InsufficientBalance();
         }
         if (currentAllowance < _value) {
@@ -68,12 +78,16 @@ contract Token {
         return true;
     }
 
-    function _transfer(address _from, address _to, uint256 _value) internal {
+    function _transfer(
+        address _from,
+        address _to,
+        uint256 _value
+    ) internal {
         if (_to == address(0)) {
             revert Token__TransferringZeroAddress();
         }
-        tokenBalances[_from] -= _value;
-        tokenBalances[_to] += _value;
+        balance[_from] -= _value;
+        balance[_to] += _value;
         emit Transfer(_from, _to, _value);
     }
 }
