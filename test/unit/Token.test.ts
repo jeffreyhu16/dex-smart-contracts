@@ -1,3 +1,4 @@
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { assert, expect } from 'chai';
 import { deployments, ethers, getNamedAccounts, network } from 'hardhat';
 import { developmentChains } from "../../helper-hardhat-config";
@@ -34,10 +35,10 @@ if (developmentChains.includes(network.name)) {
                 await expect(token.transfer(receiver, parseEther('1000')))
                     .to.be.revertedWithCustomError(token, 'Token__TransferringZeroAddress');
             });
-            it('reverts if sender has insufficient funds', async () => {
+            it('reverts if sender has insufficient balance', async () => {
                 const receiver = (await ethers.getSigners())[1];
                 await expect(token.transfer(receiver.address, parseEther('10000000'))) // 10 million
-                    .to.be.revertedWithCustomError(token, 'Token__InsufficientFunds');
+                    .to.be.revertedWithCustomError(token, 'Token__InsufficientBalance');
             });
             it('transfers token balance correctly', async () => {
                 const receiver = (await ethers.getSigners())[1];
@@ -91,6 +92,58 @@ if (developmentChains.includes(network.name)) {
                     .withArgs(
                         deployer,
                         spender.address,
+                        parseEther('1000')
+                    );
+            });
+        });
+
+        describe('transferFrom', () => {
+            let spender: SignerWithAddress, receiver: SignerWithAddress;
+            beforeEach(async () => {
+                spender = (await ethers.getSigners())[1];
+                receiver = (await ethers.getSigners())[2];
+                await token.approve(spender.address, parseEther('1000'));
+            });
+            it('reverts if approver has insufficient balance', async () => {
+                await expect(token.connect(spender).transferFrom(deployer, receiver.address, parseEther('10000000'))) // 10 million
+                    .to.be.revertedWithCustomError(token, 'Token__InsufficientBalance');
+            });
+            it('reverts if approver has insufficient allowance', async () => {
+                await expect(token.connect(spender).transferFrom(deployer, receiver.address, parseEther('10000')))
+                    .to.be.revertedWithCustomError(token, 'Token__InsufficientAllowance');
+            });
+            it('deducts spender allowance accordingly', async () => {
+                const allowanceBefore = await token.allowance(deployer, spender.address);
+                await token.connect(spender).transferFrom(deployer, receiver.address, parseEther('1000'));
+                const allowanceAfter = await token.allowance(deployer, spender.address);
+                assert.equal(
+                    allowanceAfter.toString(),
+                    allowanceBefore.sub(parseEther('1000')).toString()
+                );
+            });
+            it('transfers tokens on behalf of approver', async () => {
+                const receiverBefore = await token.tokenBalances(receiver.address);
+                const approverBefore = await token.tokenBalances(deployer);
+
+                await token.connect(spender).transferFrom(deployer, receiver.address, parseEther('1000'));
+
+                const receiverAfter = await token.tokenBalances(receiver.address);
+                const approverAfter = await token.tokenBalances(deployer);
+                assert.equal(
+                    receiverAfter.sub(receiverBefore).toString(),
+                    parseEther('1000').toString()
+                );
+                assert.equal(
+                    approverBefore.sub(approverAfter).toString(),
+                    parseEther('1000').toString()
+                );
+            });
+            it('emits Transfer event', async () => {
+                await expect(token.connect(spender).transferFrom(deployer, receiver.address, parseEther('1000')))
+                    .to.emit(token, 'Transfer')
+                    .withArgs(
+                        deployer,
+                        receiver.address,
                         parseEther('1000')
                     );
             });
