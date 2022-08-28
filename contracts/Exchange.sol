@@ -3,8 +3,6 @@ pragma solidity ^0.8.9;
 
 import "./Token.sol";
 
-error Exchange__TransferFromFailed();
-
 contract Exchange {
     address public feeAccount;
     uint256 public feeRate;
@@ -23,10 +21,7 @@ contract Exchange {
     }
 
     function depositToken(address _token, uint256 _amount) public {
-        Token token = Token(_token);
-        if (token.transferFrom(msg.sender, address(this), _amount) == false) {
-            revert Exchange__TransferFromFailed();
-        }
+        Token(_token).transferFrom(msg.sender, address(this), _amount);
         tokens[_token][msg.sender] += _amount;
         emit Deposit(_token, msg.sender, _amount, tokens[_token][msg.sender]);
     }
