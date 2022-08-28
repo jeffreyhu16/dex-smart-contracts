@@ -39,7 +39,7 @@ contract Token {
     }
 
     function transfer(address _to, uint256 _value) public returns (bool success) {
-        if (tokenBalances[msg.sender] < _value) {
+        if (tokenBalances[msg.sender] <= _value) {
             revert Token__InsufficientBalance();
         }
         _transfer(msg.sender, _to, _value);
@@ -57,10 +57,10 @@ contract Token {
 
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
         uint256 currentAllowance = allowance[_from][_to];
-        if (tokenBalances[_from] < _value) {
+        if (tokenBalances[_from] <= _value) {
             revert Token__InsufficientBalance();
         }
-        if (currentAllowance < _value) {
+        if (currentAllowance <= _value) {
             revert Token__InsufficientAllowance();
         }
         allowance[_from][_to] -= _value;
