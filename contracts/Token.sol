@@ -63,7 +63,7 @@ contract Token {
         if (currentAllowance < _value) {
             revert Token__InsufficientAllowance();
         }
-        allowance[_from][_to] -= _value;
+        allowance[_from][msg.sender] -= _value;
         _transfer(_from, _to, _value);
         return true;
     }
