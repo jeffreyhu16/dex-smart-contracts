@@ -74,6 +74,6 @@ contract Token {
         }
         tokenBalances[_from] -= _value;
         tokenBalances[_to] += _value;
-        emit Transfer(msg.sender, _to, _value);
+        emit Transfer(_from, _to, _value);
     }
 }
