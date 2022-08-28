@@ -56,7 +56,7 @@ contract Token {
     }
 
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        uint256 currentAllowance = allowance[_from][_to];
+        uint256 currentAllowance = allowance[_from][msg.sender];
         if (tokenBalances[_from] <= _value) {
             revert Token__InsufficientBalance();
         }
