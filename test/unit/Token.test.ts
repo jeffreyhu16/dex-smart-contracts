@@ -45,7 +45,8 @@ if (developmentChains.includes(network.name)) {
                 const receiverBefore = await token.balance(receiver.address);
                 const senderBefore = await token.balance(deployer);
 
-                await token.transfer(receiver.address, parseEther('1000'));
+                const tx = await token.transfer(receiver.address, parseEther('1000'));
+                await tx.wait();
 
                 const receiverAfter = await token.balance(receiver.address);
                 const senderAfter = await token.balance(deployer);
@@ -78,7 +79,8 @@ if (developmentChains.includes(network.name)) {
             });
             it('updates spender allowance', async () => {
                 const spender = (await ethers.getSigners())[1];
-                await token.approve(spender.address, parseEther('1000'));
+                const tx = await token.approve(spender.address, parseEther('1000'));
+                await tx.wait();
                 const allowance = await token.allowance(deployer, spender.address);
                 assert.equal(
                     allowance.toString(),
@@ -102,7 +104,8 @@ if (developmentChains.includes(network.name)) {
             beforeEach(async () => {
                 spender = (await ethers.getSigners())[1];
                 receiver = (await ethers.getSigners())[2];
-                await token.approve(spender.address, parseEther('1000'));
+                const tx = await token.approve(spender.address, parseEther('1000'));
+                await tx.wait();
             });
             it('reverts if approver has insufficient balance', async () => {
                 await expect(token.connect(spender).transferFrom(deployer, receiver.address, parseEther('10000000'))) // 10 million
@@ -114,7 +117,9 @@ if (developmentChains.includes(network.name)) {
             });
             it('deducts spender allowance accordingly', async () => {
                 const allowanceBefore = await token.allowance(deployer, spender.address);
-                await token.connect(spender).transferFrom(deployer, receiver.address, parseEther('1000'));
+                const tx = await token.connect(spender)
+                    .transferFrom(deployer, receiver.address, parseEther('1000'));
+                await tx.wait();
                 const allowanceAfter = await token.allowance(deployer, spender.address);
                 assert.equal(
                     allowanceAfter.toString(),
@@ -125,8 +130,9 @@ if (developmentChains.includes(network.name)) {
                 const receiverBefore = await token.balance(receiver.address);
                 const approverBefore = await token.balance(deployer);
 
-                await token.connect(spender).transferFrom(deployer, receiver.address, parseEther('1000'));
-
+                const tx = await token.connect(spender)
+                    .transferFrom(deployer, receiver.address, parseEther('1000'));
+                await tx.wait();
                 const receiverAfter = await token.balance(receiver.address);
                 const approverAfter = await token.balance(deployer);
                 assert.equal(
