@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import "hardhat/console.sol";
-
 error Token__InsufficientBalance();
 error Token__TransferringZeroAddress();
 error Token__ApprovingZeroAddress();
