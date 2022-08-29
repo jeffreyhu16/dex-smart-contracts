@@ -18,4 +18,4 @@ const deployToken: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 }
 
 export default deployToken;
-deployToken.tags = ['all', 'token'];
+deployToken.tags = ['all', 'NXP'];
