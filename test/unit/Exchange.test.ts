@@ -171,6 +171,55 @@ if (developmentChains.includes(network.name)) {
                 };
             });
         });
+
+        describe('cancelOrder', () => {
+            let makeOrderArgs: [string, BigNumber, string, BigNumber];
+
+            beforeEach(async () => {
+                const approveTx = await token_1.approve(exchange.address, parseEther('1000'));
+                await approveTx.wait();
+                const depositTx = await exchange.depositToken(token_1.address, parseEther('1000'));
+                await depositTx.wait();
+                makeOrderArgs = [
+                    token_2.address,
+                    parseEther('1000'),
+                    token_1.address,
+                    parseEther('1000')
+                ];
+                const orderTx = await exchange.makeOrder(...makeOrderArgs);
+                await orderTx.wait();
+            });
+
+            it('reverts if order id was not found', async () => {
+                await expect(exchange.cancelOrder(2))
+                    .to.be.revertedWithCustomError(exchange, 'Exchange__OrderNotFound');
+            });
+            it('reverts if msg.sender was not owner of order', async () => {
+                const nonOwner = (await ethers.getSigners())[1];
+                await expect(exchange.connect(nonOwner).cancelOrder(1))
+                    .to.be.revertedWithCustomError(exchange, 'Exchange__NotOwner');
+            });
+            it('updates orderCancelled mapping', async () => {
+                const cancelTx = await exchange.cancelOrder(1);
+                await cancelTx.wait();
+                assert(await exchange.orderCancelled(1));
+            });
+            it('emits OrderCancelled event', async () => {
+                const cancelTx = await exchange.cancelOrder(1);
+                const receipt = await cancelTx.wait();
+                await expect(cancelTx).to.emit(exchange, 'OrderCancelled');
+
+                const { args } = receipt.events![0];
+                assert.equal(args!.id.toString(), '1');
+                assert.equal(args!.user, deployer);
+                for (let i = 0; i < makeOrderArgs.length; i++) {
+                    assert.equal(
+                        args![i + 2].toString(),
+                        makeOrderArgs[i].toString()
+                    );
+                };
+            });
+        });
     });
 } else {
     describe.skip;
