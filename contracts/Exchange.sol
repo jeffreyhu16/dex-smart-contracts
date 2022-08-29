@@ -4,6 +4,8 @@ pragma solidity ^0.8.9;
 import "./Token.sol";
 
 error Exchange__InsufficientDeposit();
+error Exchange__OrderNotFound();
+error Exchange__NotOwner();
 
 contract Exchange {
     struct Order {
@@ -16,11 +18,12 @@ contract Exchange {
         uint256 timestamp;
     }
 
+    uint256 public orderCount;
     address public feeAccount;
     uint256 public feeRate;
     mapping(address => mapping(address => uint256)) public tokens;
     mapping(uint256 => Order) public orders;
-    uint256 public orderCount;
+    mapping(uint256 => bool) public orderCancelled;
 
     event Deposit(
         address token, 
@@ -37,6 +40,16 @@ contract Exchange {
     );
 
     event OrderMade(
+        uint256 id,
+        address user,
+        address tokenGet,
+        uint256 amountGet,
+        address tokenGive,
+        uint256 amountGive,
+        uint256 timestamp
+    );
+
+    event OrderCancelled(
         uint256 id,
         address user,
         address tokenGet,
@@ -89,6 +102,26 @@ contract Exchange {
             _amountGet,
             _tokenGive,
             _amountGive,
+            block.timestamp
+        );
+    }
+
+    function cancelOrder(uint256 _id) public {
+        Order memory order = orders[_id];
+        if (order.id != _id) {
+            revert Exchange__OrderNotFound();
+        }
+        if (order.user != msg.sender) {
+            revert Exchange__NotOwner();
+        }
+        orderCancelled[_id] = true;
+        emit OrderCancelled(
+            order.id,
+            order.user,
+            order.tokenGet,
+            order.amountGet,
+            order.tokenGive,
+            order.amountGive,
             block.timestamp
         );
     }
