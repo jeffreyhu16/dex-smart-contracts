@@ -16,10 +16,8 @@ if (developmentChains.includes(network.name)) {
             await deployments.fixture(['all']);
             deployer = (await getNamedAccounts()).deployer;
             exchange = await ethers.getContract('Exchange');
-            token_1 = await ethers.getContract('Token');
-
-            const Token = await ethers.getContractFactory('Token');
-            token_2 = (await Token.deploy('Wrapped DAI', 'wDAI', parseEther('1000000'))) as Token;
+            token_1 = await ethers.getContract('Token_NXP');
+            token_2 = await ethers.getContract('Token_mETH');
         });
 
         describe('constructor', () => {

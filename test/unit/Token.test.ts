@@ -11,8 +11,8 @@ if (developmentChains.includes(network.name)) {
 
         beforeEach(async () => {
             deployer = (await getNamedAccounts()).deployer;
-            await deployments.fixture(['all']);
-            token = await ethers.getContract('Token');
+            await deployments.fixture(['NXP']);
+            token = await ethers.getContract('Token_NXP');
         });
 
         describe('constructor', () => {
