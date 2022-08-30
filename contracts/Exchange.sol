@@ -65,6 +65,7 @@ contract Exchange {
         uint256 amountGet,
         address tokenGive,
         uint256 amountGive,
+        address creator,
         uint256 timestamp
     );
 
@@ -165,12 +166,23 @@ contract Exchange {
         address _tokenGive,
         uint256 _amountGive
     ) internal {
-        uint256 feeAmount = _amountGet * feePercent;
+        uint256 feeAmount = (_amountGet * feePercent) / 100;
         tokens[_tokenGet][msg.sender] -= (_amountGet + feeAmount);
         tokens[_tokenGet][_user] += _amountGet;
         tokens[_tokenGet][feeAccount] += feeAmount;
 
         tokens[_tokenGive][msg.sender] += _amountGive;
         tokens[_tokenGive][_user] -= _amountGive;
+
+        emit Trade(
+            _id,
+            msg.sender,
+            _tokenGet,
+            _amountGet,
+            _tokenGive,
+            _amountGive,
+            _user,
+            block.timestamp
+        );
     }
 }
