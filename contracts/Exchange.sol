@@ -95,7 +95,7 @@ contract Exchange {
         if (tokens[_tokenGive][msg.sender] < _amountGive) {
             revert Exchange__InsufficientDeposit();
         }
-        orderCount += 1;
+        orderCount++;
         orders[orderCount] = Order(
             orderCount,
             msg.sender,
