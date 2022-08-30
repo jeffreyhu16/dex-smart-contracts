@@ -2,9 +2,12 @@
 pragma solidity ^0.8.9;
 
 import "./Token.sol";
+import "hardhat/console.sol";
 
 error Exchange__InsufficientDeposit();
 error Exchange__OrderNotFound();
+error Exchange__OrderWasFilled();
+error Exchange__OrderWasCancelled();
 error Exchange__NotOwner();
 
 contract Exchange {
@@ -20,22 +23,18 @@ contract Exchange {
 
     uint256 public orderCount;
     address public feeAccount;
-    uint256 public feeRate;
+    uint256 public feePercent;
     mapping(address => mapping(address => uint256)) public tokens;
     mapping(uint256 => Order) public orders;
     mapping(uint256 => bool) public orderCancelled;
+    mapping(uint256 => bool) public orderFilled;
 
-    event Deposit(
-        address token, 
-        address user, 
-        uint256 amount, 
-        uint256 balance
-    );
+    event Deposit(address token, address user, uint256 amount, uint256 balance);
 
     event Withdraw(
-        address token, 
-        address user, 
-        uint256 amount, 
+        address token,
+        address user,
+        uint256 amount,
         uint256 balance
     );
 
@@ -59,9 +58,19 @@ contract Exchange {
         uint256 timestamp
     );
 
-    constructor(address _feeAccount, uint256 _feeRate) {
+    event Trade(
+        uint256 id,
+        address user,
+        address tokenGet,
+        uint256 amountGet,
+        address tokenGive,
+        uint256 amountGive,
+        uint256 timestamp
+    );
+
+    constructor(address _feeAccount, uint256 _feePercent) {
         feeAccount = _feeAccount;
-        feeRate = _feeRate;
+        feePercent = _feePercent;
     }
 
     function depositToken(address _token, uint256 _amount) public {
@@ -128,6 +137,15 @@ contract Exchange {
 
     function fillOrder(uint256 _id) public {
         Order memory order = orders[_id];
+        if (order.id != _id) {
+            revert Exchange__OrderNotFound();
+        }
+        if (orderCancelled[_id]) {
+            revert Exchange__OrderWasCancelled();
+        }
+        if (orderFilled[_id]) {
+            revert Exchange__OrderWasFilled();
+        }
         _trade(
             order.id,
             order.user,
@@ -136,6 +154,7 @@ contract Exchange {
             order.tokenGive,
             order.amountGive
         );
+        orderFilled[_id] = true;
     }
 
     function _trade(
@@ -146,7 +165,7 @@ contract Exchange {
         address _tokenGive,
         uint256 _amountGive
     ) internal {
-        uint256 feeAmount = _amountGet * feeRate;
+        uint256 feeAmount = _amountGet * feePercent;
         tokens[_tokenGet][msg.sender] -= (_amountGet + feeAmount);
         tokens[_tokenGet][_user] += _amountGet;
         tokens[_tokenGet][feeAccount] += feeAmount;
