@@ -9,7 +9,7 @@ const deployExchange: DeployFunction = async (hre: HardhatRuntimeEnvironment) =>
     const exchange = await deploy('Exchange', {
         from: deployer,
         log: true,
-        args: [deployer, 1]
+        args: [deployer, '1']
     });
 }
 
