@@ -169,6 +169,7 @@ if (developmentChains.includes(network.name)) {
                         makeOrderArgs[i].toString()
                     );
                 };
+                assert(event.args!.timestamp > 1);
             });
         });
 
@@ -218,6 +219,7 @@ if (developmentChains.includes(network.name)) {
                         makeOrderArgs[i].toString()
                     );
                 };
+                assert(args!.timestamp > 1);
             });
         });
     });
