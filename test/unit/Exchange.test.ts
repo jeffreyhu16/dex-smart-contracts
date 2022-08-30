@@ -27,7 +27,7 @@ if (developmentChains.includes(network.name)) {
                 const feeAccount = await exchange.feeAccount();
                 const feePercent = await exchange.feePercent();
                 assert.equal(deployer, feeAccount);
-                assert.equal(feePercent.toString(),'1');
+                assert.equal(feePercent.toString(), '1');
             });
         });
 
@@ -255,7 +255,7 @@ if (developmentChains.includes(network.name)) {
                 await cancelTx.wait();
                 await expect(exchange.fillOrder(1))
                     .to.be.revertedWithCustomError(exchange, 'Exchange__OrderWasCancelled');
-            }); 
+            });
             it('reverts if order was already filled', async () => {
                 const fillTx = await exchange.connect(taker).fillOrder(1);
                 await fillTx.wait();
@@ -265,6 +265,7 @@ if (developmentChains.includes(network.name)) {
             it('executes the _trade function properly', async () => {
                 const fillTx = await exchange.connect(taker).fillOrder(1);
                 const receipt = await fillTx.wait();
+
                 const maker_token_1 = await exchange.tokens(token_1.address, deployer);
                 const maker_token_2 = await exchange.tokens(token_2.address, deployer);
                 assert.equal(maker_token_1.toString(), '0');
@@ -273,6 +274,24 @@ if (developmentChains.includes(network.name)) {
                 const taker_token_2 = await exchange.tokens(token_2.address, taker.address);
                 assert.equal(taker_token_1.toString(), parseEther('1000').toString());
                 assert.equal(taker_token_2.toString(), '0');
+
+                await expect(fillTx).to.emit(exchange, 'Trade');
+                const { args } = receipt.events![0];
+                assert.equal(args!.id.toString(), '1');
+                assert.equal(args!.user, taker.address);
+                for (let i = 0; i < makeOrderArgs.length; i++) {
+                    assert.equal(
+                        args![i + 2].toString(),
+                        makeOrderArgs[i].toString()
+                    );
+                };
+                assert.equal(args!.creator, deployer);
+                assert(args!.timestamp > 1);
+            });
+            it('updates the orderFilled mapping', async () => {
+                const fillTx = await exchange.connect(taker).fillOrder(1);
+                await fillTx.wait();
+                assert(await exchange.orderFilled(1));
             });
         });
     });
