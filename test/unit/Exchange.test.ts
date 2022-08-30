@@ -25,12 +25,9 @@ if (developmentChains.includes(network.name)) {
         describe('constructor', () => {
             it('assigns arguments correctly', async () => {
                 const feeAccount = await exchange.feeAccount();
-                const feeRate = await exchange.feeRate();
+                const feePercent = await exchange.feePercent();
                 assert.equal(deployer, feeAccount);
-                assert.equal(
-                    feeRate.toString(),
-                    parseEther('0.01').toString()
-                );
+                assert.equal(feePercent.toString(),'1');
             });
         });
 
@@ -220,6 +217,62 @@ if (developmentChains.includes(network.name)) {
                     );
                 };
                 assert(args!.timestamp > 1);
+            });
+        });
+
+        describe('fillOrder', () => {
+            let makeOrderArgs: [string, BigNumber, string, BigNumber];
+            let taker: SignerWithAddress;
+
+            beforeEach(async () => {
+                taker = (await ethers.getSigners())[1];
+                const approveTx = await token_1.approve(exchange.address, parseEther('1000'));
+                await approveTx.wait();
+                const depositTx = await exchange.depositToken(token_1.address, parseEther('1000'));
+                await depositTx.wait();
+                makeOrderArgs = [
+                    token_2.address,
+                    parseEther('1000'),
+                    token_1.address,
+                    parseEther('1000')
+                ];
+                const orderTx = await exchange.makeOrder(...makeOrderArgs);
+                await orderTx.wait();
+                const transferTx = await token_2.transfer(taker.address, parseEther('1010'));
+                await transferTx.wait();
+                const takerApproveTx = await token_2.connect(taker).approve(exchange.address, parseEther('1010'));
+                await takerApproveTx.wait();
+                const takerDepositTx = await exchange.connect(taker).depositToken(token_2.address, parseEther('1010'));
+                await takerDepositTx.wait();
+            });
+
+            it('reverts if order id was not found', async () => {
+                await expect(exchange.fillOrder(2))
+                    .to.be.revertedWithCustomError(exchange, 'Exchange__OrderNotFound');
+            });
+            it('reverts if order was already cancelled', async () => {
+                const cancelTx = await exchange.cancelOrder(1);
+                await cancelTx.wait();
+                await expect(exchange.fillOrder(1))
+                    .to.be.revertedWithCustomError(exchange, 'Exchange__OrderWasCancelled');
+            }); 
+            it('reverts if order was already filled', async () => {
+                const fillTx = await exchange.connect(taker).fillOrder(1);
+                await fillTx.wait();
+                await expect(exchange.fillOrder(1))
+                    .to.be.revertedWithCustomError(exchange, 'Exchange__OrderWasFilled');
+            });
+            it('executes the _trade function properly', async () => {
+                const fillTx = await exchange.connect(taker).fillOrder(1);
+                const receipt = await fillTx.wait();
+                const maker_token_1 = await exchange.tokens(token_1.address, deployer);
+                const maker_token_2 = await exchange.tokens(token_2.address, deployer);
+                assert.equal(maker_token_1.toString(), '0');
+                assert.equal(maker_token_2.toString(), parseEther('1010').toString()); // creator == deployer == feeAccount
+                const taker_token_1 = await exchange.tokens(token_1.address, taker.address);
+                const taker_token_2 = await exchange.tokens(token_2.address, taker.address);
+                assert.equal(taker_token_1.toString(), parseEther('1000').toString());
+                assert.equal(taker_token_2.toString(), '0');
             });
         });
     });
