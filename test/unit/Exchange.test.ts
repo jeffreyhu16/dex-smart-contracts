@@ -8,8 +8,10 @@ import { BigNumber } from "ethers";
 
 if (developmentChains.includes(network.name)) {
     describe('Exchange Unit Test', () => {
-        let deployer: string, exchange: Exchange;
-        let token_1: Token, token_2: Token;
+        let deployer: string,
+            exchange: Exchange,
+            token_1: Token,
+            token_2: Token;
         const { utils: { parseEther }, BigNumber } = ethers;
 
         beforeEach(async () => {
@@ -26,6 +28,34 @@ if (developmentChains.includes(network.name)) {
                 const feePercent = await exchange.feePercent();
                 assert.equal(deployer, feeAccount);
                 assert.equal(feePercent.toString(), '1');
+            });
+        });
+
+        describe('fundExchange', () => {
+            let fundTx: TransactionResponse;
+
+            beforeEach(async () => {
+                const approveTx = await token_1.approve(exchange.address, parseEther('1000'));
+                await approveTx.wait();
+                fundTx = await exchange.fundExchange(token_1.address, parseEther('1000'));
+                await fundTx.wait();
+            }); 
+
+            it('emits Transfer event from calling transferFrom function', async () => {
+                await expect(fundTx).to.emit(token_1, 'Transfer')
+                    .withArgs(
+                        deployer,
+                        exchange.address,
+                        parseEther('1000')
+                    );
+            });
+
+            it('updates balance of tokens funded', async () => {
+                const tokenBalance = await exchange.tokens(token_1.address, exchange.address);
+                assert.equal(
+                    tokenBalance.toString(),
+                    parseEther('1000').toString()
+                );
             });
         });
 
