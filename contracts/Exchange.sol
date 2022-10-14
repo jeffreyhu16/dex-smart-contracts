@@ -4,6 +4,8 @@ pragma solidity ^0.8.9;
 import "./Token.sol";
 import "hardhat/console.sol";
 
+error Exchange__InsufficientValue();
+error Exchange__InsufficientBalance();
 error Exchange__InsufficientDeposit();
 error Exchange__OrderNotFound();
 error Exchange__OrderWasFilled();
@@ -72,6 +74,28 @@ contract Exchange {
     constructor(address _feeAccount, uint256 _feePercent) {
         feeAccount = _feeAccount;
         feePercent = _feePercent;
+    }
+
+    function fundExchange(address _token, uint256 _amount) public {
+        Token(_token).transferFrom(msg.sender, address(this), _amount);
+        tokens[_token][address(this)] += _amount;
+    }
+
+    function buyToken(address _token, uint256 _amount) public payable {
+        if (msg.value < _amount) {
+            revert Exchange__InsufficientValue();
+        }
+        Token(_token).transfer(msg.sender, _amount);
+        tokens[_token][address(this)] -= _amount;
+    }
+
+    function sellToken(address _token, uint256 _amount) public payable {
+        if (address(this).balance < _amount) {
+            revert Exchange__InsufficientBalance();
+        }
+        Token(_token).transferFrom(msg.sender, address(this), _amount);
+        tokens[_token][address(this)] += _amount;
+        (bool success, ) = msg.sender.call{value: _amount}("");
     }
 
     function depositToken(address _token, uint256 _amount) public {
