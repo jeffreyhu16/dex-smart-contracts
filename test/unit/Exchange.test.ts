@@ -39,7 +39,7 @@ if (developmentChains.includes(network.name)) {
                 await approveTx.wait();
                 fundTx = await exchange.fundExchange(token_1.address, parseEther('1000'));
                 await fundTx.wait();
-            }); 
+            });
 
             it('emits Transfer event from calling transferFrom function', async () => {
                 await expect(fundTx).to.emit(token_1, 'Transfer')
@@ -51,6 +51,57 @@ if (developmentChains.includes(network.name)) {
             });
 
             it('updates balance of tokens funded', async () => {
+                const tokenBalance = await exchange.tokens(token_1.address, exchange.address);
+                assert.equal(
+                    tokenBalance.toString(),
+                    parseEther('1000').toString()
+                );
+            });
+        });
+
+        describe('buyToken', () => {
+            let tx: TransactionResponse,
+                receiver: SignerWithAddress,
+                exchangeWithSigner: Exchange;
+
+            beforeEach(async () => {
+                const sender = (await ethers.getSigner(deployer));
+                receiver = (await ethers.getSigners())[2];
+                tx = await token_1.approve(exchange.address, parseEther('2000'));
+                await tx.wait();
+                tx = await exchange.fundExchange(token_1.address, parseEther('2000'));
+                await tx.wait();
+                exchangeWithSigner = await ethers.getContract('Exchange', receiver);
+            });
+
+            it('reverts if value sent is less than buy amount', async () => {
+                await expect(exchangeWithSigner.buyToken(
+                    token_1.address,
+                    parseEther('1000'),
+                    { value: parseEther('100') }
+                )).to.be.revertedWithCustomError(exchange, 'Exchange__InsufficientValue');
+            });
+
+            it('emits Tranfer event from calling transfer function', async () => {
+                await expect(exchangeWithSigner.buyToken(
+                    token_1.address,
+                    parseEther('1000'),
+                    { value: parseEther('1000') }
+                )).to.emit(token_1, 'Transfer')
+                    .withArgs(
+                        exchangeWithSigner.address,
+                        receiver.address,
+                        parseEther('1000')
+                    );
+            });
+
+            it('updates the balance of tokens transferred', async () => {
+                tx = await exchangeWithSigner.buyToken(
+                    token_1.address,
+                    parseEther('1000'),
+                    { value: parseEther('1000') }
+                );
+                await tx.wait();
                 const tokenBalance = await exchange.tokens(token_1.address, exchange.address);
                 assert.equal(
                     tokenBalance.toString(),
