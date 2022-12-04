@@ -19,6 +19,7 @@ const main = async () => {
     const user_1 = (await ethers.getSigners())[0];
     const user_2 = (await ethers.getSigners())[1];
 
+    let orderId: number;
     let tx: ContractTransaction, receipt: ContractReceipt;
     const amount = parseEther('1000');
 
@@ -42,112 +43,40 @@ const main = async () => {
     await tx.wait();
     console.log(`Deposited ${amount} mETH by ${user_2.address}`);
 
-    const makeOrderArgs = [
-        mETH.address,
-        parseEther('10'),
-        NXP.address,
-        parseEther('10')
-    ];
+    // create 15 random orders and fill 5 of them
 
-    tx = await exchange.makeOrder(...makeOrderArgs);
-    receipt = await tx.wait();
-
-    let orderId: number;
-    orderId = receipt.events![0].args!.id;
-    console.log(`OrderID ${orderId} made by ${user_1.address}`);
-
-    tx = await exchange.cancelOrder(orderId);
-    await tx.wait();
-    console.log(`OrderID ${orderId} cancelled by ${user_1.address}`);
-
-    // fill order 1
-
-    tx = await exchange.makeOrder(...makeOrderArgs);
-    receipt = await tx.wait();
-
-    orderId = receipt.events![0].args!.id;
-    console.log(`OrderID ${orderId} made by ${user_1.address}`);
-
-    tx = await exchange.connect(user_2).fillOrder(orderId);
-    await tx.wait();
-    console.log(`OrderID ${orderId} filled by ${user_2.address}`);
-
-    // fill order 2
-
-    tx = await exchange.makeOrder(
-        mETH.address,
-        parseEther('8'),
-        NXP.address,
-        parseEther('13')
-    );
-    receipt = await tx.wait();
-
-    orderId = receipt.events![0].args!.id;
-    console.log(`OrderID ${orderId} made by ${user_1.address}`);
-
-    tx = await exchange.connect(user_2).fillOrder(orderId);
-    await tx.wait();
-    console.log(`OrderID ${orderId} filled by ${user_2.address}`);
-
-    // fill order 3
-
-    tx = await exchange.makeOrder(
-        mETH.address,
-        parseEther('4'),
-        NXP.address,
-        parseEther('9')
-    );
-    receipt = await tx.wait();
-
-    orderId = receipt.events![0].args!.id;
-    console.log(`OrderID ${orderId} made by ${user_1.address}`);
-
-    tx = await exchange.connect(user_2).fillOrder(orderId);
-    await tx.wait();
-    console.log(`OrderID ${orderId} filled by ${user_2.address}`);
-
-    // fill order 4
-
-    tx = await exchange.makeOrder(
-        mETH.address,
-        parseEther('13'),
-        NXP.address,
-        parseEther('18')
-    );
-    receipt = await tx.wait();
-
-    orderId = receipt.events![0].args!.id;
-    console.log(`OrderID ${orderId} made by ${user_1.address}`);
-
-    tx = await exchange.connect(user_2).fillOrder(orderId);
-    await tx.wait();
-    console.log(`OrderID ${orderId} filled by ${user_2.address}`);
-
-    // create random orders
-
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 15; i++) {
         tx = await exchange.makeOrder(
             mETH.address,
-            parseEther(Math.floor(Math.random() * (20 - 5) + 5).toString()),
+            parseEther(Math.floor(Math.random() * (10 - 1) + 1).toString()),
             NXP.address,
-            parseEther(Math.floor(Math.random() * (20 - 5) + 5).toString())
+            parseEther(Math.floor(Math.random() * (20 - 10) + 10).toString())
         );
         receipt = await tx.wait();
         orderId = receipt.events![0].args!.id;
         console.log(`OrderID ${orderId} made by ${user_1.address}`);
-        console.log(`amountGet: ${receipt.events![0].args!.amountGet}`);
+        if (i < 5) {
+            tx = await exchange.connect(user_2).fillOrder(orderId);
+            await tx.wait();
+            console.log(`OrderID ${orderId} filled by ${user_2.address}`);
+        }
     }
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 15; i++) {
         tx = await exchange.connect(user_2).makeOrder(
-            mETH.address,
-            parseEther(Math.floor(Math.random() * (20 - 5) + 5).toString()),
             NXP.address,
-            parseEther(Math.floor(Math.random() * (20 - 5) + 5).toString())
+            parseEther(Math.floor(Math.random() * (20 - 10) + 10).toString()),
+            mETH.address,
+            parseEther(Math.floor(Math.random() * (10 - 1) + 1).toString())
         );
         receipt = await tx.wait();
         orderId = receipt.events![0].args!.id;
-        console.log(`OrderID ${orderId} made by ${user_1.address}`);
+        console.log(`OrderID ${orderId} made by ${user_2.address}`);
+        if (i < 5) {
+            tx = await exchange.connect(user_1).fillOrder(orderId);
+            await tx.wait();
+            console.log(`OrderID ${orderId} filled by ${user_1.address}`);
+        }
     }
 }
 

@@ -13,9 +13,14 @@ const config: HardhatUserConfig = {
     },
     goerli: {
       url: process.env.GOERLI_RPC_URL,
-      accounts: [process.env.PRIVATE_KEY!],
+      accounts: [process.env.PRIVATE_KEY_0!, process.env.PRIVATE_KEY_1!],
       chainId: 5
-    }
+    },
+    mainnet: {
+      url: process.env.MAINNET_RPC_URL,
+      accounts: [process.env.PRIVATE_KEY_2!],
+      chainId: 1,
+    },
   },
   namedAccounts: {
     deployer: {
